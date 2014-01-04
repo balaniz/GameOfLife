@@ -56,8 +56,8 @@ def clear_screen():
     os.system('cls' if os.name=='nt' else 'clear')
 
 if __name__ == "__main__":
-    clear_screen()
     random.seed( None )
+    clear_screen()
 
     speed = 0.1
     width = int( sys.argv[2] ) if len( sys.argv) > 2 else 20
@@ -69,6 +69,7 @@ if __name__ == "__main__":
             selection, conway_patterns.make_acorn )( width, height ) )
 
     while True:
+        clear_screen()
         for col in grid._grid:
             print( ' '.join( [ conway_colors.ConwayColors.DEFAULT + str( ' ' )
                     if num == 0 else
@@ -77,5 +78,4 @@ if __name__ == "__main__":
 
         grid = play_game( grid )
         time.sleep( speed )
-        clear_screen()
 
