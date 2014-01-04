@@ -4,6 +4,7 @@ import time
 import os
 import sys
 import random
+import argparse
 import conway_patterns
 import conway_colors
 import wraparound_grid
@@ -55,14 +56,34 @@ def play_game( grid ):
 def clear_screen():
     os.system('cls' if os.name=='nt' else 'clear')
 
+SLOW, FAST = range( 0, 2 )
+
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument( '-w', "--width", type = int,
+            action = "store", dest = "width", default = 20 )
+    parser.add_argument( '-t', "--height", type = int,
+            action = "store", dest = "height", default = 20 )
+    parser.add_argument( '-p', "--pattern", type = str,
+            action = "store", default = "acorn", dest = "pattern" )
+    parser.add_argument( '-s', "--speed", dest = "speed",
+            const = SLOW, default = FAST, action = "store_const" )
+    
+    return parser.parse_args()
+
 if __name__ == "__main__":
     random.seed( None )
     clear_screen()
+    args = get_args()
 
-    speed = 0.1
-    width = int( sys.argv[2] ) if len( sys.argv) > 2 else 20
-    height = int( sys.argv[3] ) if len( sys.argv) > 3 else 20
-    selection = sys.argv[1] if len( sys.argv ) > 1 else 'acorn'
+    #speed = 0.1
+    #width = int( sys.argv[2] ) if len( sys.argv) > 2 else 20
+    #height = int( sys.argv[3] ) if len( sys.argv) > 3 else 20
+    #selection = sys.argv[1] if len( sys.argv ) > 1 else 'acorn'
+    speed = 0.1 if args.speed == FAST else 0.5
+    width = args.width
+    height = args.height
+    selection = args.pattern
 
     grid = wraparound_grid.WraparoundGrid( width, height )
     grid = set_starting_cells( grid, conway_patterns.pattern_factory().get(
