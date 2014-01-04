@@ -130,10 +130,9 @@ if __name__ == "__main__":
 
     while True:
         for col in grid:
-            print( ' '.join( [  + str( ' ' )
+            print( ' '.join( [ conway_colors.ConwayColors.DEFAULT + str( ' ' )
                     if num == 0 else
-                    random.choice( conway_colors.ConwayColors.colors )
-                    + str( '#' )
+                    random.choice( conway_colors.ConwayColors.colors ) + str( '#' )
                     for num in col ] ) )
 
         time.sleep( speed )
