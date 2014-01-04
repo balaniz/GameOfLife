@@ -6,48 +6,27 @@ import sys
 import random
 import conway_patterns
 import conway_colors
-
-def init_grid( size ):
-    y = [ 0 for num in range( 0, size ) ]
-    return [ list( y ) for num in range( 0, size ) ]
+import wraparound_grid
 
 def set_starting_cells( grid, cells ):
     for cell in cells:
-        grid[cell[1]][cell[0]] = 1
+        grid[cell[0]][cell[1]] = 1
     return grid
 
-def check_rules( x, y, state, living_neighbor_count, dead_cells, new_cells ):
-    if state == 1 and living_neighbor_count < 2:
-        dead_cells.append( ( x, y ) )
-        return dead_cells, new_cells
-    if state == 1 and living_neighbor_count < 4:
-        return dead_cells, new_cells
-    if state == 1 and living_neighbor_count > 3:
-        dead_cells.append( ( x, y ) )
-        return dead_cells, new_cells
-    if state == 0 and living_neighbor_count == 3:
-        new_cells.append( ( x, y ) )
-        return dead_cells, new_cells
-
-    return dead_cells, new_cells
-
-def apply_changes( grid, dead_cells, new_cells ):
-    for cell in dead_cells:
-        if cell[0] >= len( grid ) or cell[1] >= len( grid ):
-            continue
-        grid[cell[1]][cell[0]] = 0
-    for cell in new_cells:
-        if cell[0] >= len( grid ) or cell[1] >= len( grid ):
-            continue
-        grid[cell[1]][cell[0]] = 1
+def check_rules( x, y, state, living_neighbor_count, grid ):
+    if living_neighbor_count == 3 or \
+        ( state == 1 and living_neighbor_count == 2 ):
+        grid[x][y] = 1
+    else:
+        grid[x][y] = 0
 
     return grid
 
-def play_game( grid, size ):
+def play_game( grid ):
     """
-          ( x-1, y-1 )  ( x-1, y )  ( x-1, y+1 )
-          ( x, y-1 )    ( x, y )    ( x, y+1 )
-          ( x+1, y-1 )  ( x+1, y )  ( x+1, y+1 )
+          ( x-1, y-1 )  ( x, y-1 )  ( x+1, y-1 )
+          ( x-1, y )    ( x, y )    ( x+1, y )
+          ( x-1, y+1 )  ( x, y+1 )  ( x+1, y+1 )
           
         1. Any live cell with fewer than two live neighbours dies,
                 as if caused by under-population.
@@ -55,87 +34,48 @@ def play_game( grid, size ):
                 lives on to the next generation.
         3. Any live cell with more than three live neighbours dies,
                 as if by overcrowding.
-        4. Any dead cell with exactly three live neighbours becomes a live cell,
-                as if by reproduction.
+        4. Any dead cell with exactly three live neighbours becomes a live
+                cell, as if by reproduction.
     """
-    new_cells = []
-    dead_cells = []
+    grid_width = len( grid )
+    grid_height = len( grid[0] )
+    new_grid = wraparound_grid.WraparoundGrid( grid_width, grid_height )
 
-    # check corners
-    # top left
-    living_neighbor_count = grid[1][0] + grid[1][1] + grid[0][1]
-    dead_cells, new_cells = check_rules( 0, 0, grid[0][0],
-            living_neighbor_count, dead_cells, new_cells )
-    # top right
-    living_neighbor_count = grid[size-2][0] + grid[size-2][1] + grid[size-1][1]
-    dead_cells, new_cells = check_rules( 0, size-1, grid[size-1][0],
-            living_neighbor_count, dead_cells, new_cells )
-    # bottom left
-    living_neighbor_count = grid[1][size-2] + grid[1][size-1] + grid[0][size-2]
-    dead_cells, new_cells = check_rules( size-1, 0, grid[0][size-1],
-            living_neighbor_count, dead_cells, new_cells )
-    # bottom right
-    living_neighbor_count = grid[size-2][size-2] + grid[size-2][size-1] + \
-            grid[size-1][size-2]
-    dead_cells, new_cells = check_rules( size-1, size-1, grid[size-1][size-1],
-            living_neighbor_count, dead_cells, new_cells )
-
-    # check left edge without checking corners
-    for x in range( 1, size - 1 ):
-        living_neighbor_count = grid[0][x-1] + grid[1][x-1] + \
-                grid[1][x] + grid[0][x+1] + grid[1][x+1]
-        dead_cells, new_cells = check_rules( x, 0, grid[0][x],
-                living_neighbor_count, dead_cells, new_cells )
-
-    # check right edge without checking corners
-    for x in range( 1, size - 1 ):
-        living_neighbor_count = grid[size-2][x-1] + grid[size-1][x-1] + \
-                grid[size-2][x] + grid[size-2][x+1] + grid[size-1][x+1]
-        dead_cells, new_cells = check_rules( x, size, grid[size-1][x],
-                living_neighbor_count, dead_cells, new_cells )
-
-    # check top edge without checking corners
-    for y in range( 1, size - 1 ):
-        living_neighbor_count = grid[y-1][0] + grid[y+1][0] + \
-                grid[y-1][1] + grid[y][1] + grid[y+1][1]
-        dead_cells, new_cells = check_rules( 0, y, grid[y][0],
-                living_neighbor_count, dead_cells, new_cells )
-
-    # check bottom edge without checking corners
-    for y in range( 1, size - 1 ):
-        living_neighbor_count = grid[y-1][size-2] + grid[y][size-2] + \
-                grid[y+1][size-2] + grid[y-1][size-1] + grid[y+1][size-1]
-        dead_cells, new_cells = check_rules( size-1, y, grid[y][size-1],
-                living_neighbor_count, dead_cells, new_cells )
-        
-    for y in range( 1, size - 1 ):
-        for x in range( 1, size - 1 ):
-            living_neighbor_count = grid[y-1][x-1] + grid[y][x-1] + \
-                    grid[y+1][x-1] + grid[y-1][x] + grid[y+1][x] + \
-                    grid[y-1][x+1] + grid[y][x+1] + grid[y+1][x+1]
-            dead_cells, new_cells = check_rules( x, y, grid[y][x],
-                    living_neighbor_count, dead_cells, new_cells )
+    for y in range( 0, grid_height ):
+        for x in range( 0, grid_width ):
+            living_neighbor_count = \
+                    grid[x-1][y-1] + grid[x][y-1] + grid[x+1][y-1] + \
+                    grid[x-1][y] + grid[x+1][y] + \
+                    grid[x-1][y+1] + grid[x][y+1] + grid[x+1][y+1]
+            new_grid = check_rules( x, y, grid[x][y],
+                    living_neighbor_count, new_grid )
     
-    return apply_changes( grid, dead_cells, new_cells )
+    return new_grid
+
+def clear_screen():
+    os.system('cls' if os.name=='nt' else 'clear')
 
 if __name__ == "__main__":
+    clear_screen()
     random.seed( None )
-    size = 20
+
     speed = 0.1
+    width = int( sys.argv[2] ) if len( sys.argv) > 2 else 20
+    height = int( sys.argv[3] ) if len( sys.argv) > 3 else 20
     selection = sys.argv[1] if len( sys.argv ) > 1 else 'acorn'
-    grid = init_grid( size )
-    grid = set_starting_cells( grid,
-            conway_patterns.pattern_factory( size ).get(
-            selection, conway_patterns.make_acorn )( size ) )
+
+    grid = wraparound_grid.WraparoundGrid( width, height )
+    grid = set_starting_cells( grid, conway_patterns.pattern_factory().get(
+            selection, conway_patterns.make_acorn )( width, height ) )
 
     while True:
-        for col in grid:
+        for col in grid._grid:
             print( ' '.join( [ conway_colors.ConwayColors.DEFAULT + str( ' ' )
                     if num == 0 else
-                    random.choice( conway_colors.ConwayColors.colors ) + str( '#' )
-                    for num in col ] ) )
+                    random.choice( conway_colors.ConwayColors.colors ) \
+                    + str( '#' ) for num in col._list ] ) )
 
+        grid = play_game( grid )
         time.sleep( speed )
-        grid = play_game( grid, size )
-        os.system('cls' if os.name=='nt' else 'clear')
+        clear_screen()
 
