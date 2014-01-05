@@ -5,7 +5,27 @@ def pattern_factory():
              "blinker" : make_blinker,
              "toad" : make_toad,
              "glider_gun" : make_glider_gun,
-             "acorn" : make_acorn }
+             "acorn" : make_acorn,
+             "queen_bee_loop" : make_queen_bee_loop,
+             "queen_bee_shuttle" : make_queen_bee_shuttle }
+
+def make_queen_bee_shuttle( width, height ):
+    pass
+
+def make_queen_bee_loop( width, height ):
+    if width < 24 or height < 24:
+        return make_blinker( width, height )
+
+    return [ ( 2, 13 ), ( 3, 11 ), ( 3, 13 ), ( 4, 10 ), ( 4, 12 ),
+             ( 5, 9 ), ( 5, 12 ), ( 6, 10 ), ( 6, 12 ), ( 7, 11 ),
+             ( 7, 13 ), ( 8, 13 ), ( 9, 18 ), ( 10, 17 ), ( 10, 19 ),
+             ( 11, 16 ), ( 11, 20 ), ( 12, 17 ), ( 12, 18 ), ( 12, 19 ),
+             ( 13, 15 ), ( 13, 16 ), ( 13, 20 ), ( 13, 21 ), ( 14, 2 ),
+             ( 14, 3 ), ( 14, 7 ), ( 14, 8 ), ( 15, 4 ), ( 15, 5 ),
+             ( 15, 6 ), ( 16, 3 ), ( 16, 7 ), ( 17, 4 ), ( 17, 6 ),
+             ( 18, 5 ), ( 19, 14 ), ( 20, 14 ), ( 20, 16 ), ( 21, 15 ),
+             ( 21, 17 ), ( 22, 15 ), ( 22, 18 ), ( 23, 15 ), ( 23, 17 ),
+             ( 24, 14 ), ( 24, 16 ), ( 25, 14 ) ]
 
 def make_blinker( width, height ):
     return [ (3,3),(3,4),(3,5) ]

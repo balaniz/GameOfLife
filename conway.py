@@ -5,6 +5,8 @@ import os
 import sys
 import random
 import argparse
+import threading
+import queue
 import conway_patterns
 import conway_colors
 import wraparound_grid
@@ -54,7 +56,8 @@ def play_game( grid ):
     return new_grid
 
 def clear_screen():
-    os.system('cls' if os.name=='nt' else 'clear')
+    #os.system('cls' if os.name=='nt' else 'clear')
+    os.system( 'tput reset' )
 
 SLOW, FAST = range( 0, 2 )
 
@@ -66,20 +69,29 @@ def get_args():
             action = "store", dest = "height", default = 20 )
     parser.add_argument( '-p', "--pattern", type = str,
             action = "store", default = "acorn", dest = "pattern" )
-    parser.add_argument( '-s', "--speed", dest = "speed",
+    parser.add_argument( '-s', "--slow", dest = "speed",
             const = SLOW, default = FAST, action = "store_const" )
     
     return parser.parse_args()
 
-if __name__ == "__main__":
+def make_painter( q ):
+    def painter():
+        while True:
+            grid = q.get()
+            clear_screen()
+            for col in grid._grid:
+                print( ' '.join( [ conway_colors.ConwayColors.DEFAULT + str( ' ' )
+                        if num == 0 else
+                        random.choice( conway_colors.ConwayColors.colors ) \
+                        + str( '#' ) for num in col._list ] ) )
+    return painter
+
+def main():
+    q = queue.Queue()
     random.seed( None )
     clear_screen()
     args = get_args()
 
-    #speed = 0.1
-    #width = int( sys.argv[2] ) if len( sys.argv) > 2 else 20
-    #height = int( sys.argv[3] ) if len( sys.argv) > 3 else 20
-    #selection = sys.argv[1] if len( sys.argv ) > 1 else 'acorn'
     speed = 0.1 if args.speed == FAST else 0.5
     width = args.width
     height = args.height
@@ -88,15 +100,18 @@ if __name__ == "__main__":
     grid = wraparound_grid.WraparoundGrid( width, height )
     grid = set_starting_cells( grid, conway_patterns.pattern_factory().get(
             selection, conway_patterns.make_acorn )( width, height ) )
+    
+    painter = make_painter( q )
+    thread = threading.Thread( target = painter )
+    thread.daemon = True
+    thread.start()
 
     while True:
-        clear_screen()
-        for col in grid._grid:
-            print( ' '.join( [ conway_colors.ConwayColors.DEFAULT + str( ' ' )
-                    if num == 0 else
-                    random.choice( conway_colors.ConwayColors.colors ) \
-                    + str( '#' ) for num in col._list ] ) )
-
         grid = play_game( grid )
+        q.put( grid )
         time.sleep( speed )
+        #clear_screen()
+
+if __name__ == "__main__":
+    main()
 
